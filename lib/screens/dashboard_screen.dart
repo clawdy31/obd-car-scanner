@@ -18,7 +18,7 @@ class DashboardScreen extends StatelessWidget {
     final fuel = double.tryParse(liveData['fuel'] ?? '0') ?? 0;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 100, 20, 120),
+      padding: const EdgeInsets.fromLTRB(20, 40, 20, 120),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

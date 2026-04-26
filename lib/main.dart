@@ -219,11 +219,12 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _showBluetoothSheet(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (ctx) => const _BluetoothSheet(),
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      builder: (ctx) => const _BluetoothSheet(),
     );
   }
 
@@ -530,13 +531,14 @@ class _BluetoothSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Consumer<ObdManager>(
       builder: (context, obd, _) {
         final screenHeight = MediaQuery.of(context).size.height;
         return Container(
           height: math.min(screenHeight * 0.6, 500.0),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             boxShadow: [
               BoxShadow(color: Colors.black.withAlpha(102), blurRadius: 24, offset: const Offset(0, -6)),
@@ -563,7 +565,7 @@ class _BluetoothSheet extends StatelessWidget {
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('Bluetooth OBD', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('Bluetooth OBD', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF510000))),
                         Text(obd.statusMessage, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
                       ]),
                     ),
