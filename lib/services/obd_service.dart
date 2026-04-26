@@ -13,8 +13,6 @@ class ObdService {
   StreamSubscription? _dataSubscription;
   StreamSubscription? _stateSubscription;
   bool _isConnected = false;
-  int _retryCount = 0;
-  static const int _maxRetries = 3;
 
   // Response buffer for chunked data
   String _responseBuffer = '';
@@ -374,7 +372,11 @@ class ObdService {
 
   void _cleanup() {
     _responseBuffer = '';
-    _retryCount = 0;
+  }
+
+  /// Send OBD command and get string response (convenience wrapper)
+  Future<String> sendCommand(String cmd, {Duration? timeout}) async {
+    return await _connection.writeWithResponse(cmd, timeout: timeout ?? const Duration(seconds: 2));
   }
 
   void dispose() {

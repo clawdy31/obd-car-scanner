@@ -201,7 +201,7 @@ class BluetoothService {
       Completer<String> completer = Completer();
 
       // Send command + CR
-      _connection!.output.add(Uint8List.fromList('${command}\r'.codeUnits));
+      _connection!.output.add(Uint8List.fromList('$command\r'.codeUnits));
       await _connection!.output.allSent;
 
       // Listen for response with timeout

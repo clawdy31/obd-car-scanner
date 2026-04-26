@@ -13,28 +13,30 @@ class BleObdConnection implements ObdConnection {
   final _stateStreamController = StreamController<ConnectionState>.broadcast();
   ConnectionState _currentState = ConnectionState.disconnected;
   StreamSubscription? _notifySubscription;
-  StreamSubscription? _stateSubscription;
   StreamSubscription? _connectionSubscription;
-  String? _lastDeviceId;
-  List<int>? _lastValue;
 
-  // Common BLE OBD service and characteristic UUIDs
-  // Many BLE ELM327 adapters use these standard UUIDs
+  // All known BLE OBD service UUIDs (try all of them)
   static final List<Guid> _obdServiceUuids = [
-    Guid('0000ffe0-0000-1000-8000-00805f9b34fb'), // Common OBD service
-    Guid('0000fff0-0000-1000-8000-00805f9b34fb'), // Alternative OBD service
-    Guid('6e400001-b5a3-f393-e0a9-e50e24dcca9e'), // Nordic UART Service
+    // Standard OBD services
+    Guid('0000ffe0-0000-1000-8000-00805f9b34fb'),
+    Guid('0000fff0-0000-1000-8000-00805f9b34fb'),
+    // Nordic UART (common in cheap BLE OBD dongles)
+    Guid('6e400001-b5a3-f393-e0a9-e50e24dcca9e'),
+    // Device Information
+    Guid('0000180a-0000-1000-8000-00805f9b34fb'),
+    // Health Device Profile
+    Guid('0000180f-0000-1000-8000-00805f9b34fb'),
   ];
 
   static final List<Guid> _writeCharUuids = [
-    Guid('0000ffe1-0000-1000-8000-00805f9b34fb'), // Common write char
-    Guid('0000fff1-0000-1000-8000-00805f9b34fb'), // Alternative write
+    Guid('0000ffe1-0000-1000-8000-00805f9b34fb'),
+    Guid('0000fff1-0000-1000-8000-00805f9b34fb'),
     Guid('6e400002-b5a3-f393-e0a9-e50e24dcca9e'), // Nordic UART TX
   ];
 
   static final List<Guid> _notifyCharUuids = [
-    Guid('0000ffe3-0000-1000-8000-00805f9b34fb'), // Common notify char
-    Guid('0000fff3-0000-1000-8000-00805f9b34fb'), // Alternative notify
+    Guid('0000ffe3-0000-1000-8000-00805f9b34fb'),
+    Guid('0000fff3-0000-1000-8000-00805f9b34fb'),
     Guid('6e400003-b5a3-f393-e0a9-e50e24dcca9e'), // Nordic UART RX
   ];
 
@@ -57,7 +59,6 @@ class BleObdConnection implements ObdConnection {
     }
 
     _updateState(ConnectionState.connecting);
-    _lastDeviceId = deviceId;
 
     try {
       // Stop any existing scan
@@ -65,7 +66,7 @@ class BleObdConnection implements ObdConnection {
         await FlutterBluePlus.stopScan();
       }
 
-      // Get device from the MAC address
+      // Get device from the ID
       _device = BluetoothDevice.fromId(deviceId);
 
       // Connect with timeout
@@ -74,7 +75,7 @@ class BleObdConnection implements ObdConnection {
       // Listen for connection state changes
       _connectionSubscription = _device!.connectionState.listen((state) {
         if (state == BluetoothConnectionState.disconnected) {
-          disconnect();
+          _updateState(ConnectionState.disconnected);
         }
       });
 
@@ -82,8 +83,16 @@ class BleObdConnection implements ObdConnection {
       bool found = await _discoverAndSetupCharacteristics();
 
       if (!found) {
+        // Try even harder - scan ALL services and use ANY writable+readable chars
+        found = await _aggressiveFallback();
+      }
+
+      if (!found) {
         await disconnect();
-        throw ObdConnectionException('OBD characteristics not found on device', deviceId: deviceId);
+        throw ObdConnectionException(
+          'OBD characteristics not found on device. The connected device may not be a BLE OBD adapter, or it uses non-standard UUIDs.',
+          deviceId: deviceId,
+        );
       }
 
       _updateState(ConnectionState.connected);
@@ -99,6 +108,7 @@ class BleObdConnection implements ObdConnection {
     }
   }
 
+  /// Try to find OBD characteristics using known UUIDs
   Future<bool> _discoverAndSetupCharacteristics() async {
     if (_device == null) return false;
 
@@ -107,54 +117,109 @@ class BleObdConnection implements ObdConnection {
       List<BluetoothService> services = await _device!.discoverServices();
 
       for (var service in services) {
-        // Get characteristics
+        String svcUuid = service.uuid.str.toLowerCase();
+
+        // Check if this is a known OBD service
+        bool isObdService = _obdServiceUuids.any(
+          (uuid) => svcUuid == uuid.str.toLowerCase(),
+        );
+
         for (var char in service.characteristics) {
           String charUuid = char.uuid.str.toLowerCase();
 
           // Find write characteristic
           if (_writeChar == null) {
-            bool isWriteUuid = _writeCharUuids.any((uuid) => 
-              charUuid == uuid.str.toLowerCase());
-            bool isWritable = char.properties.write || char.properties.writeWithoutResponse;
-            
-            if (isWriteUuid || (isWritable && _notifyChar == null)) {
+            bool isWriteUuid = _writeCharUuids.any(
+              (uuid) => charUuid == uuid.str.toLowerCase(),
+            );
+            bool isWritable = char.properties.write ||
+                char.properties.writeWithoutResponse;
+
+            if (isWriteUuid ||
+                (isWritable && _notifyChar == null && isObdService)) {
               _writeChar = char;
             }
           }
 
           // Find notify/read characteristic
           if (_notifyChar == null) {
-            bool isNotifyUuid = _notifyCharUuids.any((uuid) => 
-              charUuid == uuid.str.toLowerCase());
-            bool isNotifiable = char.properties.notify || char.properties.indicate || char.properties.read;
-            
-            if (isNotifyUuid || isNotifiable) {
+            bool isNotifyUuid = _notifyCharUuids.any(
+              (uuid) => charUuid == uuid.str.toLowerCase(),
+            );
+            bool isNotifiable = char.properties.notify ||
+                char.properties.indicate ||
+                char.properties.read;
+
+            if (isNotifyUuid ||
+                (isNotifiable && _writeChar == null && isObdService)) {
               _notifyChar = char;
             }
           }
 
-          // If we found both, we're done
           if (_writeChar != null && _notifyChar != null) {
             return true;
           }
         }
       }
 
-      // Fallback: try to use first writable and first notifiable characteristics
+      return false;
+    } catch (e) {
+      _dataStreamController.addError('Service discovery failed: $e');
+      return false;
+    }
+  }
+
+  /// Last resort: find ANY writable + readable/notifiable characteristics
+  /// Some cheap BLE OBD adapters use completely custom UUIDs
+  Future<bool> _aggressiveFallback() async {
+    if (_device == null) return false;
+
+    try {
+      List<BluetoothService> services = await _device!.discoverServices();
+
       for (var service in services) {
         for (var char in service.characteristics) {
-          if (_writeChar == null && (char.properties.write || char.properties.writeWithoutResponse)) {
+          // Find a write characteristic
+          if (_writeChar == null &&
+              (char.properties.write ||
+                  char.properties.writeWithoutResponse)) {
             _writeChar = char;
           }
-          if (_notifyChar == null && (char.properties.notify || char.properties.indicate || char.properties.read)) {
+
+          // Find a notify or readable characteristic
+          if (_notifyChar == null &&
+              (char.properties.notify ||
+                  char.properties.indicate ||
+                  char.properties.read)) {
             _notifyChar = char;
+          }
+
+          if (_writeChar != null && _notifyChar != null) {
+            return true;
+          }
+        }
+      }
+
+      // Even more aggressive: split write and notify from same char
+      for (var service in services) {
+        for (var char in service.characteristics) {
+          // If char has both write and notify/read, use it for both
+          bool hasWrite = char.properties.write ||
+              char.properties.writeWithoutResponse;
+          bool hasNotify = char.properties.notify ||
+              char.properties.indicate ||
+              char.properties.read;
+
+          if (hasWrite && hasNotify) {
+            _writeChar ??= char;
+            _notifyChar ??= char;
           }
         }
       }
 
       return _writeChar != null && _notifyChar != null;
     } catch (e) {
-      _dataStreamController.addError('Service discovery failed: $e');
+      _dataStreamController.addError('Aggressive fallback failed: $e');
       return false;
     }
   }
@@ -163,17 +228,14 @@ class BleObdConnection implements ObdConnection {
     if (_notifyChar == null) return;
 
     try {
-      // Determine if we should use notifications or read
-      bool useNotify = _notifyChar!.properties.notify || _notifyChar!.properties.indicate;
-      
+      bool useNotify =
+          _notifyChar!.properties.notify || _notifyChar!.properties.indicate;
+
       if (useNotify) {
-        // Enable notifications
         await _notifyChar!.setNotifyValue(true);
-        
-        // Subscribe to value changes via lastValueStream
+
         _notifySubscription = _notifyChar!.lastValueStream.listen(
           (data) {
-            _lastValue = data;
             if (data.isNotEmpty) {
               String text = utf8.decode(data, allowMalformed: true);
               _dataStreamController.add(text);
@@ -228,11 +290,10 @@ class BleObdConnection implements ObdConnection {
     }
 
     try {
-      // Auto-append carriage return
-      String commandWithCR = command.endsWith('\r') ? command : '$command\r';
+      String commandWithCR =
+          command.endsWith('\r') ? command : '$command\r';
       List<int> data = utf8.encode(commandWithCR);
 
-      // Write with or without response depending on characteristic properties
       if (_writeChar!.properties.writeWithoutResponse) {
         await _writeChar!.write(data, withoutResponse: true);
       } else {
@@ -244,7 +305,10 @@ class BleObdConnection implements ObdConnection {
   }
 
   @override
-  Future<String> writeWithResponse(String command, {Duration timeout = const Duration(seconds: 2)}) async {
+  Future<String> writeWithResponse(
+    String command, {
+    Duration timeout = const Duration(seconds: 2),
+  }) async {
     if (_writeChar == null || !isConnected) {
       throw ObdConnectionException('Not connected');
     }
@@ -252,10 +316,8 @@ class BleObdConnection implements ObdConnection {
     StringBuffer response = StringBuffer();
     Completer<String> completer = Completer();
 
-    // Send command
     await write(command);
 
-    // Listen for response via notifications
     StreamSubscription? sub;
     Timer? timer;
 
@@ -263,7 +325,6 @@ class BleObdConnection implements ObdConnection {
       (data) {
         response.write(data);
 
-        // Check for prompt indicating end of response
         if (data.contains('>')) {
           timer?.cancel();
           sub?.cancel();
