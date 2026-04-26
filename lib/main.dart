@@ -138,12 +138,22 @@ class _MainScreenState extends State<MainScreen> {
           builder: (ctx) => GestureDetector(
             onTap: () => Scaffold.of(ctx).openDrawer(),
             child: Container(
-              margin: const EdgeInsets.only(left: 4),
-              padding: const EdgeInsets.all(4),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.asset('assets/icons/app_icon.png', width: 40, height: 40),
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: isDark ? NeuColors.darkBg : NeuColors.lightBg,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: isDark
+                    ? [
+                        BoxShadow(color: NeuColors.darkShadowLight, offset: const Offset(-2, -2), blurRadius: 6, spreadRadius: -1),
+                        BoxShadow(color: NeuColors.darkShadowDark.withAlpha(128), offset: const Offset(2, 2), blurRadius: 6, spreadRadius: -1),
+                      ]
+                    : [
+                        BoxShadow(color: NeuColors.lightShadowDark.withAlpha(77), offset: const Offset(2, 2), blurRadius: 6, spreadRadius: -1),
+                        BoxShadow(color: NeuColors.lightShadowLight, offset: const Offset(-2, -2), blurRadius: 6, spreadRadius: -1),
+                      ],
               ),
+              child: Icon(Icons.menu_rounded, color: isDark ? Colors.white70 : Colors.grey[700], size: 24),
             ),
           ),
         ),
