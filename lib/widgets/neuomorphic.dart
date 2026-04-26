@@ -4,15 +4,15 @@ import 'package:flutter/material.dart';
 /// Light neumorphism: soft gray background with white + gray shadows
 /// Dark neumorphism: dark gray background with lighter + darker shadows
 class NeuColors {
-  // Light theme
+  // Light theme - crisp neumorphic
   static const lightBg = Color(0xFFE0E5EC);
-  static const lightShadowDark = Color(0xFFA3B1C6);
-  static const lightShadowLight = Color(0xFFFFFFFF);
+  static const lightShadowDark = Color(0xFFA3B1C6);         // #A3B1C6 100%
+  static const lightShadowLight = Color(0xFFFFFFFF);        // pure white
 
-  // Dark theme
+  // Dark theme - premium crisp extrusion
   static const darkBg = Color(0xFF2D2D30);
-  static const darkShadowDark = Color(0xFF1A1A1D);
-  static const darkShadowLight = Color(0xFF3D3D42);
+  static const darkShadowDark = Color(0xFF14161A);           // deeper dark, defines height
+  static const darkShadowLight = Color(0xFF404550);          // subtle rim light, ~80%
 }
 
 /// Raised neumorphic container (extruded look)
@@ -45,33 +45,34 @@ class NeuContainer extends StatelessWidget {
         borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: isDark
             ? [
-                // Dark neumorphic: bottom-right dark, top-left lighter
+                // Dark shadow: deep, defines the extrusion height
                 BoxShadow(
                   color: NeuColors.darkShadowDark,
-                  offset: const Offset(5, 5),
-                  blurRadius: 15,
-                  spreadRadius: -2,
+                  offset: const Offset(6, 6),
+                  blurRadius: 12,
+                  spreadRadius: 1,
                 ),
+                // Light shadow: defines the crisp rim/edge
                 BoxShadow(
                   color: NeuColors.darkShadowLight,
-                  offset: const Offset(-4, -4),
-                  blurRadius: 12,
-                  spreadRadius: -2,
+                  offset: const Offset(-5, -5),
+                  blurRadius: 10,
+                  spreadRadius: 1,
                 ),
               ]
             : [
-                // Light neumorphic: bottom-right gray, top-left white
+                // Light neumorphic: crisp white + gray
                 BoxShadow(
                   color: NeuColors.lightShadowDark,
-                  offset: const Offset(5, 5),
-                  blurRadius: 15,
-                  spreadRadius: -2,
+                  offset: const Offset(6, 6),
+                  blurRadius: 12,
+                  spreadRadius: 1,
                 ),
                 BoxShadow(
                   color: NeuColors.lightShadowLight,
                   offset: const Offset(-5, -5),
-                  blurRadius: 15,
-                  spreadRadius: -2,
+                  blurRadius: 10,
+                  spreadRadius: 1,
                 ),
               ],
       ),
