@@ -130,34 +130,22 @@ class _MainScreenState extends State<MainScreen> {
           setState(() => _currentIndex = idx);
         },
       ),
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(52),
-        child: Container(
-          margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withAlpha(51), blurRadius: 12, offset: const Offset(0, 4)),
-            ],
-          ),
-          child: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            leading: Builder(
-              builder: (ctx) => GestureDetector(
-                onTap: () => Scaffold.of(ctx).openDrawer(),
-                child: Container(
-                  margin: const EdgeInsets.only(left: 4),
-                  padding: const EdgeInsets.all(4),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Image.asset('assets/icons/app_icon.png', width: 40, height: 40),
-                  ),
-                ),
+      appBar: AppBar(
+        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        elevation: 0,
+        leading: Builder(
+          builder: (ctx) => GestureDetector(
+            onTap: () => Scaffold.of(ctx).openDrawer(),
+            child: Container(
+              margin: const EdgeInsets.only(left: 4),
+              padding: const EdgeInsets.all(4),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.asset('assets/icons/app_icon.png', width: 40, height: 40),
               ),
             ),
+          ),
+        ),
             title: Text('Doctor Car', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18, color: isDark ? Colors.white : const Color(0xFF510000))),
             actions: [
               IconButton(
@@ -185,8 +173,6 @@ class _MainScreenState extends State<MainScreen> {
               const SizedBox(width: 8),
             ],
           ),
-        ),
-      ),
       body: Container(
         decoration: BoxDecoration(
           gradient: isDark
