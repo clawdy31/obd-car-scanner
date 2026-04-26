@@ -83,9 +83,74 @@ class DashboardScreen extends StatelessWidget {
             children: [
               Expanded(child: _SensorCard(label: 'MAF Rate', tooltipMsg: 'Mass Air Flow: Measures the amount of air entering the engine to calculate fuel injection.', value: liveData['maf'] ?? '--', unit: 'g/s', icon: Icons.air_rounded, color: const Color(0xFFE11D48))),
               const SizedBox(width: 12),
-              Expanded(child: _SensorCard(label: 'Engine Load', tooltipMsg: 'Engine Load: The current mechanical stress on the engine compared to its maximum capacity.', value: liveData['load'] ?? '--', unit: '%', icon: Icons.settings_rounded, color: const Color(0xFFE11D48))),
+              Expanded(child: _SensorCard(label: 'MAP', tooltipMsg: 'Manifold Absolute Pressure: Pressure in the intake manifold to help the ECU calculate air density.', value: liveData['map'] ?? '--', unit: 'kPa', icon: Icons.speed_rounded, color: const Color(0xFFE11D48))),
             ],
           ),
+          const SizedBox(height: 24),
+
+          // Fuel & Air Section
+          _SectionHeader(title: 'Fuel & Air Delivery', icon: Icons.opacity_rounded),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _SensorCard(label: 'STFT', tooltipMsg: 'Short-Term Fuel Trim: Immediate fuel corrections; high positive values suggest a vacuum leak.', value: liveData['stft'] ?? '--', unit: '%', icon: Icons.tune_rounded, color: const Color(0xFF10B981))),
+              const SizedBox(width: 12),
+              Expanded(child: _SensorCard(label: 'LTFT', tooltipMsg: 'Long-Term Fuel Trim: Persistent fuel corrections; the best indicator of overall engine health.', value: liveData['ltft'] ?? '--', unit: '%', icon: Icons.tune_rounded, color: const Color(0xFF10B981))),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _SensorCard(label: 'Intake Air Temp', tooltipMsg: 'IAT: Temperature of air entering the intake; high heat reduces performance.', value: liveData['iat'] ?? '--', unit: '°C', icon: Icons.water_drop_rounded, color: const Color(0xFF008F9C))),
+              const SizedBox(width: 12),
+              Expanded(child: _SensorCard(label: 'Fuel System', tooltipMsg: 'Open Loop = cold/heavy load; Closed Loop = efficient running using O2 feedback.', value: liveData['fuel_system'] ?? '--', unit: '', icon: Icons.local_gas_station_rounded, color: const Color(0xFFE11D48))),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Ignition & Emissions Section
+          _SectionHeader(title: 'Ignition & Emissions', icon: Icons.flash_on_rounded),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _SensorCard(label: 'Timing Adv.', tooltipMsg: 'Timing Advance: How early the spark fires; ECU retards if knocking is detected.', value: liveData['timing'] ?? '--', unit: '°', icon: Icons.bolt_rounded, color: const Color(0xFFE11D48))),
+              const SizedBox(width: 12),
+              Expanded(child: _SensorCard(label: 'EGR Error', tooltipMsg: 'EGR Error: Monitors the Exhaust Gas Recirculation system for emissions health.', value: liveData['egr'] ?? '--', unit: '%', icon: Icons.recycling_rounded, color: const Color(0xFF9C0000))),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _SensorCard(label: 'O2 Sensor (U)', tooltipMsg: 'O2 Sensor (Upstream): Rapidly switching voltage shows if engine is running rich or lean.', value: liveData['o2_u'] ?? '--', unit: 'V', icon: Icons.electric_bolt_rounded, color: const Color(0xFF10B981))),
+              const SizedBox(width: 12),
+              Expanded(child: _SensorCard(label: 'O2 Sensor (D)', tooltipMsg: 'O2 Sensor (Downstream): Steady voltage monitors catalytic converter efficiency.', value: liveData['o2_d'] ?? '--', unit: 'V', icon: Icons.electric_bolt_rounded, color: const Color(0xFF10B981))),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Electrical & Battery Section
+          _SectionHeader(title: 'Electrical & Battery', icon: Icons.battery_charging_full_rounded),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _SensorCard(label: 'Module Voltage', tooltipMsg: 'Control Module Voltage: Verifies alternator is charging battery (13.8V–14.4V is healthy).', value: liveData['voltage'] ?? '--', unit: 'V', icon: Icons.battery_full_rounded, color: const Color(0xFF008F9C))),
+              const SizedBox(width: 12),
+              Expanded(child: _SensorCard(label: 'Rel. Throttle', tooltipMsg: 'Relative Throttle Position: Shows the learned idle position of the throttle motor.', value: liveData['rel_throttle'] ?? '--', unit: '%', icon: Icons.speed_rounded, color: const Color(0xFFE11D48))),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Trip Stats Section
+          _SectionHeader(title: 'Trip & Distance Stats', icon: Icons.directions_car_rounded),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _SensorCard(label: 'Dist. Since Codes', tooltipMsg: 'Distance traveled since DTCs were cleared. Vital for emissions test verification.', value: liveData['dist_codes'] ?? '--', unit: 'km', icon: Icons.straighten_rounded, color: const Color(0xFFE11D48))),
+              const SizedBox(width: 12),
+              Expanded(child: _SensorCard(label: 'Warm-ups', tooltipMsg: 'Warm-ups since codes cleared: Number of times engine reached operating temp.', value: liveData['warmups'] ?? '--', unit: '', icon: Icons.thermostat_rounded, color: const Color(0xFF10B981))),
+            ],
+          ),
+          const SizedBox(height: 24),
         ],
       ),
     );

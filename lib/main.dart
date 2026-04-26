@@ -209,9 +209,9 @@ class _MainScreenState extends State<MainScreen> {
               bool success = await obd.clearDTCs();
               return success;
             }),
-            _LiveDataScreen(obd: obd),
-            _VehicleInfoScreen(vehicleInfo: obd.vehicleInfo, isConnected: obd.isConnected),
-            _SettingsScreen(),
+            _LiveDataScreen(obd: obd, onBack: () => setState(() => _currentIndex = 0)),
+            _SettingsScreen(onBack: () => setState(() => _currentIndex = 0)),
+            _VehicleInfoScreen(vehicleInfo: obd.vehicleInfo, isConnected: obd.isConnected, onBack: () => setState(() => _currentIndex = 0)),
           ],
         ),
       ),
@@ -219,11 +219,11 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _showBluetoothSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: false,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => const _BluetoothSheet(),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (ctx) => const _BluetoothSheet(),
+      ),
     );
   }
 
@@ -354,7 +354,8 @@ class _NavBarItem extends StatelessWidget {
 }
 
 class _SettingsScreen extends StatelessWidget {
-  const _SettingsScreen();
+  final VoidCallback? onBack;
+  const _SettingsScreen({this.onBack});
 
   @override
   Widget build(BuildContext context) {
@@ -375,7 +376,7 @@ class _SettingsScreen extends StatelessWidget {
                 child: Row(children: [
                   IconButton(
                     icon: Icon(Icons.arrow_back_ios, color: isDark ? Colors.white : const Color(0xFF510000)),
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () => onBack != null ? onBack!() : Navigator.pop(context),
                   ),
                   const SizedBox(width: 8),
                   Text('Settings', style: GoogleFonts.poppins(fontSize: 26, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF510000))),
@@ -524,109 +525,179 @@ class _HelperStep extends StatelessWidget {
   }
 }
 
-class _BluetoothSheet extends StatefulWidget {
-  const _BluetoothSheet({super.key});
+class _BluetoothSheet extends StatelessWidget {
+  const _BluetoothSheet();
 
-  @override
-  State<_BluetoothSheet> createState() => _BluetoothSheetState();
-}
-
-class _BluetoothSheetState extends State<_BluetoothSheet> {
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Consumer<ObdManager>(
       builder: (context, obd, _) {
         final screenHeight = MediaQuery.of(context).size.height;
         return Container(
           height: math.min(screenHeight * 0.6, 500.0),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            color: Colors.white,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             boxShadow: [
               BoxShadow(color: Colors.black.withAlpha(102), blurRadius: 24, offset: const Offset(0, -6)),
             ],
           ),
-          child: Column(children: [
-            Container(margin: const EdgeInsets.only(top: 12), width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[600], borderRadius: BorderRadius.circular(2))),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(children: [
-                Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: const Color(0xFFE11D48).withAlpha(26), borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.bluetooth, color: Color(0xFFE11D48))),
-                const SizedBox(width: 16),
-                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Bluetooth OBD', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF510000))),
-                  Text(obd.statusMessage, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
-                ])),
-                if (obd.isConnected) Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(color: const Color(0xFF10B981).withAlpha(51), borderRadius: BorderRadius.circular(20)),
-                  child: Text('Connected', style: GoogleFonts.poppins(color: const Color(0xFF10B981), fontSize: 12)),
+          child: Material(
+            color: Colors.transparent,
+            child: Column(
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(color: Colors.grey[600], borderRadius: BorderRadius.circular(2)),
                 ),
-              ]),
-            ),
-            if (!obd.isConnected) Container(
-              margin: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE11D48).withAlpha(13),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE11D48).withAlpha(26)),
-              ),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Before Scanning:', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFFE11D48))),
-                const SizedBox(height: 12),
-                Row(children: [const _HelperStep(icon: Icons.power, text: 'Plug in OBD adapter'), const SizedBox(width: 16), const _HelperStep(icon: Icons.vpn_key, text: 'Turn ignition ON')]),
-              ]),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(children: [
-                if (obd.isConnected)
-                  Expanded(child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
-                    onPressed: () async {
-                      await obd.disconnect();
-                      if (context.mounted) Navigator.pop(context);
-                    },
-                    icon: const Icon(Icons.close),
-                    label: Text('Disconnect', style: GoogleFonts.poppins()),
-                  ))
-                else ...[
-                  Expanded(child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE11D48)),
-                    onPressed: obd.isScanning ? null : () => obd.scanForDevices(),
-                    icon: Icon(obd.isScanning ? Icons.hourglass_empty : Icons.search),
-                    label: Text(obd.isScanning ? 'Scanning...' : 'Scan Devices', style: GoogleFonts.poppins()),
-                  )),
-                  if (obd.isScanning) ...[
-                    const SizedBox(width: 12),
-                    IconButton(onPressed: () => obd.stopScan(), icon: const Icon(Icons.close), style: IconButton.styleFrom(backgroundColor: Colors.grey.withAlpha(51))),
-                  ],
-                ],
-              ]),
-            ),
-            const SizedBox(height: 16),
-            const Divider(),
-            const SizedBox(height: 8),
-            Expanded(
-              child: obd.discoveredDevices.isEmpty
-                  ? _BluetoothEmptyState(isScanning: obd.isScanning)
-                  : ListView.builder(
-                      key: const ValueKey('device-list'),
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      itemCount: obd.discoveredDevices.length,
-                      itemBuilder: (context, index) {
-                        final device = obd.discoveredDevices[index];
-                        return _DeviceListItem(
-                          device: device,
-                          isDark: isDark,
-                          onTap: () => obd.connectToDevice(device),
-                        );
-                      },
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(color: const Color(0xFFE11D48).withAlpha(26), borderRadius: BorderRadius.circular(12)),
+                      child: const Icon(Icons.bluetooth, color: Color(0xFFE11D48)),
                     ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text('Bluetooth OBD', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text(obd.statusMessage, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
+                      ]),
+                    ),
+                    if (obd.isConnected)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(color: const Color(0xFF10B981).withAlpha(51), borderRadius: BorderRadius.circular(20)),
+                        child: Text('Connected', style: GoogleFonts.poppins(color: const Color(0xFF10B981), fontSize: 12)),
+                      ),
+                  ]),
+                ),
+                if (!obd.isConnected)
+                  Container(
+                    margin: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE11D48).withAlpha(13),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFE11D48).withAlpha(26)),
+                    ),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('Before Scanning:', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFFE11D48))),
+                      const SizedBox(height: 12),
+                      Row(children: [
+                        Icon(Icons.power, color: const Color(0xFF9C0000), size: 16),
+                        const SizedBox(width: 8),
+                        Text('Plug in OBD adapter', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
+                        const SizedBox(width: 24),
+                        Icon(Icons.vpn_key, color: const Color(0xFF9C0000), size: 16),
+                        const SizedBox(width: 8),
+                        Text('Turn ignition ON', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
+                      ]),
+                    ]),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(children: [
+                    if (obd.isConnected)
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+                          onPressed: () async {
+                            await obd.disconnect();
+                            if (context.mounted) Navigator.pop(context);
+                          },
+                          icon: const Icon(Icons.close),
+                          label: Text('Disconnect', style: GoogleFonts.poppins()),
+                        ),
+                      )
+                    else ...[
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE11D48)),
+                          onPressed: obd.isScanning ? null : () => obd.scanForDevices(),
+                          icon: Icon(obd.isScanning ? Icons.hourglass_empty : Icons.search),
+                          label: Text(obd.isScanning ? 'Scanning...' : 'Scan Devices', style: GoogleFonts.poppins()),
+                        ),
+                      ),
+                    ],
+                  ]),
+                ),
+                const SizedBox(height: 16),
+                const Divider(),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: obd.discoveredDevices.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                obd.isScanning ? Icons.bluetooth_searching : Icons.bluetooth_disabled,
+                                size: 64,
+                                color: Colors.grey[600],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                obd.isScanning ? 'Searching for devices...' : 'No Devices Found',
+                                style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey[500]),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Tap "Scan Devices" to find your OBD adapter',
+                                style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          key: const ValueKey('device-list'),
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          itemCount: obd.discoveredDevices.length,
+                          itemBuilder: (context, index) {
+                            final device = obd.discoveredDevices[index];
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[100],
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: Colors.grey.withAlpha(26)),
+                              ),
+                              child: Row(children: [
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF00ACC1).withAlpha(26),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(Icons.bluetooth, color: Color(0xFF00ACC1)),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text((device.name ?? 'Unknown Device'), style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+                                      Text(device.id, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(color: const Color(0xFFE11D48).withAlpha(26), borderRadius: BorderRadius.circular(20)),
+                                  child: Text('Connect', style: GoogleFonts.poppins(color: const Color(0xFFE11D48), fontSize: 12)),
+                                ),
+                              ]),
+                            );
+                          },
+                        ),
+                ),
+              ],
             ),
-          ]),
+          ),
         );
       },
     );
@@ -760,7 +831,7 @@ class _AppDrawer extends StatelessWidget {
         children: [
           DrawerHeader(
             margin: EdgeInsets.zero,
-            padding: const EdgeInsets.fromLTRB(20, 48, 20, 16),
+            padding: const EdgeInsets.fromLTRB(20, 36, 20, 16),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -811,7 +882,6 @@ class _AppDrawer extends StatelessWidget {
                 ),
               ]),
             ),
-          ),
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -872,7 +942,8 @@ class _DrawerItem extends StatelessWidget {
 
 class _LiveDataScreen extends StatelessWidget {
   final ObdManager obd;
-  const _LiveDataScreen({required this.obd});
+  final VoidCallback? onBack;
+  const _LiveDataScreen({required this.obd, this.onBack});
 
   @override
   Widget build(BuildContext context) {
@@ -928,7 +999,8 @@ class _DataRow extends StatelessWidget {
 class _VehicleInfoScreen extends StatelessWidget {
   final VehicleInfo vehicleInfo;
   final bool isConnected;
-  const _VehicleInfoScreen({required this.vehicleInfo, required this.isConnected});
+  final VoidCallback? onBack;
+  const _VehicleInfoScreen({required this.vehicleInfo, required this.isConnected, this.onBack});
 
   @override
   Widget build(BuildContext context) {
