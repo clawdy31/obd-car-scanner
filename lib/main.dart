@@ -130,6 +130,7 @@ class _MainScreenState extends State<MainScreen> {
           Navigator.pop(context);
           setState(() => _currentIndex = idx);
         },
+        onThemeTap: () => _showThemeSheet(context),
       ),
       appBar: AppBar(
         backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
@@ -159,19 +160,6 @@ class _MainScreenState extends State<MainScreen> {
         ),
             title: Text('Doctor Car', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18, color: isDark ? Colors.white : const Color(0xFF510000))),
             actions: [
-              IconButton(
-                icon: Consumer<ThemeProvider>(
-                  builder: (context, theme, _) => Icon(
-                    theme.themeMode == ThemeMode.dark
-                        ? Icons.dark_mode_rounded
-                        : theme.themeMode == ThemeMode.light
-                            ? Icons.light_mode_rounded
-                            : Icons.brightness_auto_rounded,
-                    color: isDark ? Colors.white : const Color(0xFF6B6B6B),
-                  ),
-                ),
-                onPressed: () => _showThemeSheet(context),
-              ),
               IconButton(
                 icon: Icon(obd.isConnected ? Icons.bluetooth_connected : Icons.bluetooth, color: obd.isConnected ? const Color(0xFFE11D48) : (isDark ? Colors.white : const Color(0xFF6B6B6B))),
                 onPressed: () => _showBluetoothSheet(context),
@@ -815,8 +803,9 @@ class _DeviceListItem extends StatelessWidget {
 class _AppDrawer extends StatelessWidget {
   final int currentIndex;
   final Function(int) onItemSelected;
+  final VoidCallback? onThemeTap;
 
-  const _AppDrawer({required this.currentIndex, required this.onItemSelected});
+  const _AppDrawer({required this.currentIndex, required this.onItemSelected, this.onThemeTap});
 
   @override
   Widget build(BuildContext context) {
@@ -826,75 +815,146 @@ class _AppDrawer extends StatelessWidget {
     return Drawer(
       backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Column(
-        children: [
-          DrawerHeader(
-            margin: EdgeInsets.zero,
-            padding: const EdgeInsets.fromLTRB(20, 36, 20, 16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDark
-                    ? [const Color(0xFF2A2A2A), const Color(0xFF1E1E1E)]
-                    : [const Color(0xFFE11D48), const Color(0xFF9C0000)],
+      child: SafeArea(
+        child: Column(
+          children: [
+            // Drawer Header
+            DrawerHeader(
+              margin: EdgeInsets.zero,
+              padding: const EdgeInsets.fromLTRB(20, 36, 20, 16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isDark
+                      ? [const Color(0xFF2A2A2A), const Color(0xFF1E1E1E)]
+                      : [const Color(0xFFE11D48), const Color(0xFF9C0000)],
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withAlpha(51),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.asset('assets/icons/app_icon.png', width: 40, height: 40, fit: BoxFit.cover),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('Doctor Car', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                      Text('OBD Scanner', style: GoogleFonts.poppins(fontSize: 12, color: Colors.white70)),
+                    ])),
+                  ]),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: obd.isConnected
+                          ? const Color(0xFF10B981).withAlpha(51)
+                          : Colors.white.withAlpha(26),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(obd.isConnected ? Icons.bluetooth_connected : Icons.bluetooth_disabled, color: Colors.white, size: 16),
+                      const SizedBox(width: 8),
+                      Text(
+                        obd.isConnected ? 'Connected to \${obd.connectedDeviceName ?? "OBD"}' : 'Not Connected',
+                        style: GoogleFonts.poppins(color: Colors.white, fontSize: 12),
+                      ),
+                    ]),
+                  ),
+                ],
               ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withAlpha(51),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.asset('assets/icons/app_icon.png', width: 40, height: 40, fit: BoxFit.cover),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('Doctor Car', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-                    Text('OBD Scanner', style: GoogleFonts.poppins(fontSize: 12, color: Colors.white70)),
-                  ])),
+            // Navigation Items
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Column(children: [
+                  _DrawerItem(icon: Icons.dashboard_rounded, label: 'Dashboard', isSelected: currentIndex == 0, onTap: () => onItemSelected(0)),
+                  _DrawerItem(icon: Icons.error_outline_rounded, label: 'Errors', isSelected: currentIndex == 1, badgeCount: obd.storedCodes.length, onTap: () => onItemSelected(1)),
+                  _DrawerItem(icon: Icons.show_chart_rounded, label: 'Live Data', isSelected: currentIndex == 2, onTap: () => onItemSelected(2)),
+                  const Divider(),
+                  _DrawerItem(icon: Icons.settings_rounded, label: 'Settings', isSelected: currentIndex == 3, onTap: () => onItemSelected(3)),
+                  _DrawerItem(icon: Icons.info_outline_rounded, label: 'Info', isSelected: currentIndex == 4, onTap: () => onItemSelected(4)),
                 ]),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: obd.isConnected
-                        ? const Color(0xFF10B981).withAlpha(51)
-                        : Colors.white.withAlpha(26),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(obd.isConnected ? Icons.bluetooth_connected : Icons.bluetooth_disabled, color: Colors.white, size: 16),
-                    const SizedBox(width: 8),
-                    Text(
-                      obd.isConnected ? 'Connected to \${obd.connectedDeviceName ?? "OBD"}' : 'Not Connected',
-                      style: GoogleFonts.poppins(color: Colors.white, fontSize: 12),
+              ),
+            ),
+            // Bottom bar: theme (left) + exit (right)
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                border: Border(top: BorderSide(color: isDark ? Colors.white10 : Colors.grey[200]!, width: 1)),
+              ),
+              child: Row(children: [
+                // Theme toggle
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                    if (onThemeTap != null) onThemeTap!();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: isDark ? NeuColors.darkBg : NeuColors.lightBg,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: isDark
+                          ? [
+                              BoxShadow(color: NeuColors.darkShadowLight, offset: const Offset(-2, -2), blurRadius: 6, spreadRadius: -1),
+                              BoxShadow(color: NeuColors.darkShadowDark.withAlpha(128), offset: const Offset(2, 2), blurRadius: 6, spreadRadius: -1),
+                            ]
+                          : [
+                              BoxShadow(color: NeuColors.lightShadowDark.withAlpha(77), offset: const Offset(2, 2), blurRadius: 6, spreadRadius: -1),
+                              BoxShadow(color: NeuColors.lightShadowLight, offset: const Offset(-2, -2), blurRadius: 6, spreadRadius: -1),
+                            ],
                     ),
-                  ]),
+                    child: Consumer<ThemeProvider>(
+                      builder: (context, theme, _) => Icon(
+                        theme.themeMode == ThemeMode.dark
+                            ? Icons.dark_mode_rounded
+                            : theme.themeMode == ThemeMode.light
+                                ? Icons.light_mode_rounded
+                                : Icons.brightness_auto_rounded,
+                        color: isDark ? Colors.white70 : Colors.grey[700],
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                // Exit
+                GestureDetector(
+                  onTap: () => SystemNavigator.pop(),
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: isDark ? NeuColors.darkBg : NeuColors.lightBg,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: isDark
+                          ? [
+                              BoxShadow(color: NeuColors.darkShadowLight, offset: const Offset(-2, -2), blurRadius: 6, spreadRadius: -1),
+                              BoxShadow(color: NeuColors.darkShadowDark.withAlpha(128), offset: const Offset(2, 2), blurRadius: 6, spreadRadius: -1),
+                            ]
+                          : [
+                              BoxShadow(color: NeuColors.lightShadowDark.withAlpha(77), offset: const Offset(2, 2), blurRadius: 6, spreadRadius: -1),
+                              BoxShadow(color: NeuColors.lightShadowLight, offset: const Offset(-2, -2), blurRadius: 6, spreadRadius: -1),
+                            ],
+                    ),
+                    child: Icon(Icons.exit_to_app_rounded, color: isDark ? Colors.white70 : Colors.grey[700], size: 22),
+                  ),
                 ),
               ]),
             ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Column(children: [
-                _DrawerItem(icon: Icons.dashboard_rounded, label: 'Dashboard', isSelected: currentIndex == 0, onTap: () => onItemSelected(0)),
-                _DrawerItem(icon: Icons.error_outline_rounded, label: 'Errors', isSelected: currentIndex == 1, badgeCount: obd.storedCodes.length, onTap: () => onItemSelected(1)),
-                _DrawerItem(icon: Icons.show_chart_rounded, label: 'Live Data', isSelected: currentIndex == 2, onTap: () => onItemSelected(2)),
-                const Divider(),
-                _DrawerItem(icon: Icons.settings_rounded, label: 'Settings', isSelected: currentIndex == 3, onTap: () => onItemSelected(3)),
-                _DrawerItem(icon: Icons.info_outline_rounded, label: 'Info', isSelected: currentIndex == 4, onTap: () => onItemSelected(4)),
-              ]),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
