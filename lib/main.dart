@@ -8,6 +8,7 @@ import 'screens/splash_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/dtc_screen.dart';
 import 'widgets/common_widgets.dart';
+import 'widgets/neuomorphic.dart';
 import 'services/obd_manager.dart';
 import 'services/models/obd_device.dart';
 import 'services/bluetooth_scanner_manager.dart';

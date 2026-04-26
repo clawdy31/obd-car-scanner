@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/common_widgets.dart';
+import '../widgets/neuomorphic.dart';
 
 class DashboardScreen extends StatelessWidget {
   final Map<String, String> liveData;
@@ -165,17 +166,12 @@ class _ModernConnectionStatus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = isDark ? Colors.white : const Color(0xFF2D2D30);
+    final secondaryColor = isDark ? Colors.white60 : Colors.grey[600]!;
+
+    return NeuContainer(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withAlpha(8)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withAlpha(102), blurRadius: 20, offset: const Offset(0, 8)),
-          BoxShadow(color: Colors.white.withAlpha(13), blurRadius: 1, offset: const Offset(0, -1)),
-        ],
-      ),
       child: Row(
         children: [
           Container(
@@ -235,21 +231,18 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = isDark ? Colors.white : const Color(0xFF2D2D30);
+
     return Row(
       children: [
-        Container(
+        NeuContainer(
           padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: const Color(0xFF2A2A2A),
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withAlpha(51), blurRadius: 8, offset: const Offset(0, 4)),
-            ],
-          ),
+          borderRadius: 10,
           child: Icon(icon, color: const Color(0xFFE11D48), size: 16),
         ),
         const SizedBox(width: 12),
-        Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey[200])),
+        Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: primaryColor)),
       ],
     );
   }
@@ -278,38 +271,32 @@ class _ModernGaugeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final percentage = (currentValue / maxValue).clamp(0.0, 1.0);
+    final primaryColor = isDark ? Colors.white : const Color(0xFF2D2D30);
+    final secondaryColor = isDark ? Colors.white60 : Colors.grey[600]!;
+    final progressBg = isDark ? NeuColors.darkShadowDark : NeuColors.lightShadowDark;
 
-    return Container(
+    return NeuContainer(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withAlpha(8)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withAlpha(102), blurRadius: 20, offset: const Offset(0, 8)),
-          BoxShadow(color: Colors.white.withAlpha(13), blurRadius: 1, offset: const Offset(0, -1)),
-        ],
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Expanded(
-                child: Text(label, style: TextStyle(color: Colors.grey[400], fontSize: 12)),
+                child: Text(label, style: TextStyle(color: secondaryColor, fontSize: 12)),
               ),
               Tooltip(
                 message: tooltipMsg,
                 triggerMode: TooltipTriggerMode.tap,
                 showDuration: const Duration(seconds: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2A2A2A),
+                  color: isDark ? NeuColors.darkBg : NeuColors.lightBg,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.white.withAlpha(13)),
                 ),
-                textStyle: const TextStyle(color: Colors.white, fontSize: 12),
-                child: Icon(Icons.info_outline, color: Colors.grey[600], size: 14),
+                textStyle: TextStyle(color: primaryColor, fontSize: 12),
+                child: Icon(Icons.info_outline, color: secondaryColor, size: 14),
               ),
             ],
           ),
@@ -317,17 +304,16 @@ class _ModernGaugeCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(value, style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: alertColor ? Colors.red : Colors.grey[200])),
+              Text(value, style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: alertColor ? Colors.red : primaryColor)),
               const SizedBox(width: 4),
-              Padding(padding: const EdgeInsets.only(bottom: 4), child: Text(unit, style: TextStyle(color: Colors.grey[500], fontSize: 14))),
+              Padding(padding: const EdgeInsets.only(bottom: 4), child: Text(unit, style: TextStyle(color: secondaryColor, fontSize: 14))),
             ],
           ),
           const SizedBox(height: 12),
-          // Progress bar
           Container(
             height: 8,
             decoration: BoxDecoration(
-              color: Colors.grey[800],
+              color: progressBg,
               borderRadius: BorderRadius.circular(4),
             ),
             child: FractionallySizedBox(
@@ -346,8 +332,8 @@ class _ModernGaugeCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('0', style: TextStyle(color: Colors.grey[600], fontSize: 10)),
-              Text('${maxValue.toInt()}', style: TextStyle(color: Colors.grey[600], fontSize: 10)),
+              Text('0', style: TextStyle(color: secondaryColor, fontSize: 10)),
+              Text('${maxValue.toInt()}', style: TextStyle(color: secondaryColor, fontSize: 10)),
             ],
           ),
         ],
@@ -379,19 +365,14 @@ class _MiniGaugeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final percentage = (currentValue / maxValue).clamp(0.0, 1.0);
+    final primaryColor = isDark ? Colors.white : const Color(0xFF2D2D30);
+    final secondaryColor = isDark ? Colors.white60 : Colors.grey[600]!;
+    final progressBg = isDark ? NeuColors.darkShadowDark : NeuColors.lightShadowDark;
 
-    return Container(
+    return NeuContainer(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withAlpha(8)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withAlpha(102), blurRadius: 16, offset: const Offset(0, 6)),
-          BoxShadow(color: Colors.white.withAlpha(13), blurRadius: 1, offset: const Offset(0, -1)),
-        ],
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -399,18 +380,17 @@ class _MiniGaugeCard extends StatelessWidget {
             children: [
               Icon(icon, color: color, size: 16),
               const SizedBox(width: 6),
-              Expanded(child: Text(label, style: TextStyle(color: Colors.grey[400], fontSize: 11))),
+              Expanded(child: Text(label, style: TextStyle(color: secondaryColor, fontSize: 11))),
               Tooltip(
                 message: tooltipMsg,
                 triggerMode: TooltipTriggerMode.tap,
                 showDuration: const Duration(seconds: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2A2A2A),
+                  color: isDark ? NeuColors.darkBg : NeuColors.lightBg,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.white.withAlpha(13)),
                 ),
-                textStyle: const TextStyle(color: Colors.white, fontSize: 12),
-                child: Icon(Icons.info_outline, color: Colors.grey[600], size: 12),
+                textStyle: TextStyle(color: primaryColor, fontSize: 12),
+                child: Icon(Icons.info_outline, color: secondaryColor, size: 12),
               ),
             ],
           ),
@@ -418,16 +398,16 @@ class _MiniGaugeCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.grey[200])),
+              Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: primaryColor)),
               const SizedBox(width: 2),
-              Padding(padding: const EdgeInsets.only(bottom: 2), child: Text(unit, style: TextStyle(color: Colors.grey[500], fontSize: 11))),
+              Padding(padding: const EdgeInsets.only(bottom: 2), child: Text(unit, style: TextStyle(color: secondaryColor, fontSize: 11))),
             ],
           ),
           const SizedBox(height: 8),
           Container(
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey[800],
+              color: progressBg,
               borderRadius: BorderRadius.circular(2),
             ),
             child: FractionallySizedBox(
@@ -464,17 +444,13 @@ class _ModernLinearGauge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = isDark ? Colors.white : const Color(0xFF2D2D30);
+    final secondaryColor = isDark ? Colors.white60 : Colors.grey[600]!;
+    final progressBg = isDark ? NeuColors.darkShadowDark : NeuColors.lightShadowDark;
+
+    return NeuContainer(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withAlpha(8)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withAlpha(102), blurRadius: 20, offset: const Offset(0, 8)),
-          BoxShadow(color: Colors.white.withAlpha(13), blurRadius: 1, offset: const Offset(0, -1)),
-        ],
-      ),
       child: Column(
         children: [
           Row(
@@ -491,7 +467,7 @@ class _ModernLinearGauge extends StatelessWidget {
                     child: Icon(Icons.local_gas_station_rounded, color: const Color(0xFFE11D48), size: 18),
                   ),
                   const SizedBox(width: 12),
-                  Text(label, style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey[200])),
+                  Text(label, style: TextStyle(fontWeight: FontWeight.w600, color: primaryColor)),
                 ],
               ),
               Row(
@@ -506,10 +482,10 @@ class _ModernLinearGauge extends StatelessWidget {
                       border: Border.all(color: Colors.white.withAlpha(13)),
                     ),
                     textStyle: const TextStyle(color: Colors.white, fontSize: 12),
-                    child: Icon(Icons.info_outline, color: Colors.grey[600], size: 14),
+                    child: Icon(Icons.info_outline, color: secondaryColor, size: 14),
                   ),
                   const SizedBox(width: 8),
-                  Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey[200])),
+                  Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: primaryColor)),
                   const SizedBox(width: 4),
                   Text(unit, style: TextStyle(color: Colors.grey[500])),
                 ],
@@ -520,7 +496,7 @@ class _ModernLinearGauge extends StatelessWidget {
           Container(
             height: 12,
             decoration: BoxDecoration(
-              color: Colors.grey[800],
+              color: progressBg,
               borderRadius: BorderRadius.circular(6),
             ),
             child: FractionallySizedBox(
@@ -560,17 +536,12 @@ class _SensorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = isDark ? Colors.white : const Color(0xFF2D2D30);
+    final secondaryColor = isDark ? Colors.white60 : Colors.grey[600]!;
+
+    return NeuContainer(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withAlpha(8)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withAlpha(102), blurRadius: 20, offset: const Offset(0, 8)),
-          BoxShadow(color: Colors.white.withAlpha(13), blurRadius: 1, offset: const Offset(0, -1)),
-        ],
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -585,25 +556,24 @@ class _SensorCard extends StatelessWidget {
                 child: Icon(icon, color: color, size: 18),
               ),
               const SizedBox(width: 12),
-              Expanded(child: Text(label, style: TextStyle(color: Colors.grey[400], fontSize: 12))),
+              Expanded(child: Text(label, style: TextStyle(color: secondaryColor, fontSize: 12))),
               Tooltip(
                 message: tooltipMsg,
                 triggerMode: TooltipTriggerMode.tap,
                 showDuration: const Duration(seconds: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2A2A2A),
+                  color: isDark ? NeuColors.darkBg : NeuColors.lightBg,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.white.withAlpha(13)),
                 ),
-                textStyle: const TextStyle(color: Colors.white, fontSize: 12),
-                child: Icon(Icons.info_outline, color: Colors.grey[600], size: 14),
+                textStyle: TextStyle(color: primaryColor, fontSize: 12),
+                child: Icon(Icons.info_outline, color: secondaryColor, size: 14),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.grey[200])),
+          Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: primaryColor)),
           const SizedBox(height: 4),
-          Text(unit, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+          Text(unit, style: TextStyle(color: secondaryColor, fontSize: 12)),
         ],
       ),
     );
