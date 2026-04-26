@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../main.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -64,27 +63,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 ),
               ),
             ),
-            const SizedBox(height: 48),
-            // Subtle tagline
-            Text(
-              'OBD-II Diagnostics',
-              style: GoogleFonts.poppins(
-                fontSize: 8,
-                fontWeight: FontWeight.w400,
-                color: const Color(0xFF00ACC1),
-                letterSpacing: 1,
-              ),
-            ),
-            const SizedBox(height: 56),
-            // Loading indicator in cyan
-            SizedBox(
-              width: 40,
-              height: 40,
-              child: CircularProgressIndicator(
-                strokeWidth: 3,
-                valueColor: const AlwaysStoppedAnimation<Color>(const Color(0xFF00ACC1)),
-              ),
-            ),
+
           ],
         ),
       ),
