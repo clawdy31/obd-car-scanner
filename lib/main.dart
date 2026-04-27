@@ -113,7 +113,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  static const List<String> _titles = ['Doctor Car', 'Errors', 'Live', 'Settings', 'Info'];
+  static const List<String> _titles = ['Doctor Car', 'Diagnostics', 'Live', 'Settings', 'Info'];
 
   @override
   Widget build(BuildContext context) {
@@ -133,45 +133,56 @@ class _MainScreenState extends State<MainScreen> {
         onThemeTap: () => _showThemeSheet(context),
       ),
       appBar: AppBar(
-        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFFFD7E5),
         elevation: 0,
-        leading: Builder(
-          builder: (ctx) => GestureDetector(
-            onTap: () => Scaffold.of(ctx).openDrawer(),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: isDark ? NeuColors.darkBg : NeuColors.lightBg,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: isDark
-                    ? [
-                        BoxShadow(color: NeuColors.darkShadowLight, offset: const Offset(-2, -2), blurRadius: 6, spreadRadius: -1),
-                        BoxShadow(color: NeuColors.darkShadowDark.withAlpha(128), offset: const Offset(2, 2), blurRadius: 6, spreadRadius: -1),
-                      ]
-                    : [
-                        BoxShadow(color: NeuColors.lightShadowDark.withAlpha(77), offset: const Offset(2, 2), blurRadius: 6, spreadRadius: -1),
-                        BoxShadow(color: NeuColors.lightShadowLight, offset: const Offset(-2, -2), blurRadius: 6, spreadRadius: -1),
-                      ],
-              ),
-              child: Icon(Icons.menu_rounded, color: isDark ? Colors.white70 : Colors.grey[700], size: 24),
-            ),
+        leadingWidth: 0,
+        leading: const SizedBox.shrink(),
+        automaticallyImplyLeading: false,
+        titleSpacing: 0,
+        title: Align(
+          alignment: Alignment.centerLeft,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 20),
+            child: Text('Doctor Car', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18, color: isDark ? Colors.white : const Color(0xFF510000))),
           ),
         ),
-            title: Text('Doctor Car', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18, color: isDark ? Colors.white : const Color(0xFF510000))),
-            actions: [
-              IconButton(
-                icon: Icon(obd.isConnected ? Icons.bluetooth_connected : Icons.bluetooth, color: obd.isConnected ? const Color(0xFFE11D48) : (isDark ? Colors.white : const Color(0xFF6B6B6B))),
-                onPressed: () => _showBluetoothSheet(context),
-              ),
-              if (obd.isConnected)
-                IconButton(
-                  icon: Icon(Icons.refresh, color: isDark ? Colors.white : const Color(0xFF6B6B6B)),
-                  onPressed: () => obd.startScan(),
+        actions: [
+          Builder(
+            builder: (ctx) => GestureDetector(
+              onTap: () => Scaffold.of(ctx).openDrawer(),
+              child: Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: isDark ? NeuColors.darkBg : NeuColors.lightBg,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: NeuColors.lightShadowDark.withAlpha(26),
+                      offset: const Offset(1, 1),
+                      blurRadius: 4,
+                      spreadRadius: -1,
+                    ),
+                    BoxShadow(
+                      color: NeuColors.lightShadowLight.withAlpha(128),
+                      offset: const Offset(-1, -1),
+                      blurRadius: 4,
+                      spreadRadius: -1,
+                    ),
+                  ],
                 ),
-              const SizedBox(width: 8),
-            ],
+                child: Icon(Icons.menu_rounded, color: isDark ? Colors.white70 : Colors.grey[700], size: 22),
+              ),
+            ),
           ),
+          if (obd.isConnected)
+            IconButton(
+              icon: Icon(Icons.refresh, color: isDark ? Colors.white : const Color(0xFF6B6B6B)),
+              onPressed: () => obd.startScan(),
+            ),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: Container(
         decoration: BoxDecoration(
           gradient: isDark
@@ -189,7 +200,7 @@ class _MainScreenState extends State<MainScreen> {
         child: IndexedStack(
           index: _currentIndex,
           children: [
-            DashboardScreen(liveData: obd.liveData, isConnected: obd.isConnected, deviceName: obd.connectedDeviceName),
+            DashboardScreen(liveData: obd.liveData, isConnected: obd.isConnected, deviceName: obd.connectedDeviceName, onConnectTap: () => _showBluetoothSheet(context)),
             DtcScreen(storedCodes: obd.storedCodes, isConnected: obd.isConnected, onClearCodes: () async {
               bool success = await obd.clearDTCs();
               return success;
@@ -645,39 +656,45 @@ class _BluetoothSheet extends StatelessWidget {
                           itemCount: obd.discoveredDevices.length,
                           itemBuilder: (context, index) {
                             final device = obd.discoveredDevices[index];
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Colors.grey.withAlpha(26)),
+                            return GestureDetector(
+                              onTap: () async {
+                                bool ok = await obd.connectToDevice(device);
+                                if (ok && context.mounted) Navigator.pop(context);
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: isDark ? const Color(0xFF2A2A2A) : Colors.grey[100],
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: isDark ? Colors.white.withAlpha(13) : Colors.grey.withAlpha(26)),
+                                ),
+                                child: Row(children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF00ACC1).withAlpha(26),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(Icons.bluetooth, color: Color(0xFF00ACC1)),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text((device.name ?? 'Unknown Device'), style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF1A1A1A))),
+                                        Text(device.id, style: GoogleFonts.poppins(fontSize: 12, color: isDark ? Colors.grey[400] : Colors.grey[600])),
+                                      ],
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(color: const Color(0xFFE11D48).withAlpha(26), borderRadius: BorderRadius.circular(20)),
+                                    child: Text('Connect', style: GoogleFonts.poppins(color: const Color(0xFFE11D48), fontSize: 12)),
+                                  ),
+                                ]),
                               ),
-                              child: Row(children: [
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF00ACC1).withAlpha(26),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Icon(Icons.bluetooth, color: Color(0xFF00ACC1)),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text((device.name ?? 'Unknown Device'), style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
-                                      Text(device.id, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(color: const Color(0xFFE11D48).withAlpha(26), borderRadius: BorderRadius.circular(20)),
-                                  child: Text('Connect', style: GoogleFonts.poppins(color: const Color(0xFFE11D48), fontSize: 12)),
-                                ),
-                              ]),
                             );
                           },
                         ),
@@ -879,7 +896,7 @@ class _AppDrawer extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 child: Column(children: [
                   _DrawerItem(icon: Icons.dashboard_rounded, label: 'Dashboard', isSelected: currentIndex == 0, onTap: () => onItemSelected(0)),
-                  _DrawerItem(icon: Icons.error_outline_rounded, label: 'Errors', isSelected: currentIndex == 1, badgeCount: obd.storedCodes.length, onTap: () => onItemSelected(1)),
+                  _DrawerItem(icon: Icons.error_outline_rounded, label: 'Diagnostics', isSelected: currentIndex == 1, badgeCount: obd.storedCodes.length, onTap: () => onItemSelected(1)),
                   _DrawerItem(icon: Icons.show_chart_rounded, label: 'Live Data', isSelected: currentIndex == 2, onTap: () => onItemSelected(2)),
                   const Divider(),
                   _DrawerItem(icon: Icons.settings_rounded, label: 'Settings', isSelected: currentIndex == 3, onTap: () => onItemSelected(3)),

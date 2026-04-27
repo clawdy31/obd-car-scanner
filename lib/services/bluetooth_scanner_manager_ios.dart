@@ -63,12 +63,18 @@ class BluetoothScannerManager {
       _bleScanSub = ble.FlutterBluePlus.scanResults.listen(
         (results) {
           for (var result in results) {
+            print("BLE Scanned MAC: ${result.device.remoteId.str} | OS Name: ${result.device.platformName} | Adv Name: ${result.advertisementData.localName}");
+
+            String deviceName = result.advertisementData.localName.isNotEmpty
+                ? result.advertisementData.localName
+                : (result.device.platformName.isNotEmpty
+                    ? result.device.platformName
+                    : 'Unknown Device');
+
             if (!_devices.any((d) => d.id == result.device.remoteId.str)) {
               _addDevice(ObdDevice(
                 id: result.device.remoteId.str,
-                name: result.device.platformName.isNotEmpty
-                    ? result.device.platformName
-                    : 'BLE Device',
+                name: deviceName,
                 type: BluetoothType.ble,
                 rssi: result.rssi,
               ));

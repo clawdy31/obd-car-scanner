@@ -115,27 +115,14 @@ class BluetoothScannerManager {
 
   Future<void> _startClassicScan(Duration timeout) async {
     try {
-      List<classic.BluetoothDevice> paired = [];
-      try {
-        paired = await classic.FlutterBluetoothSerial.instance.getBondedDevices();
-        for (var device in paired) {
-          _addDevice(ObdDevice(
-            id: device.address,
-            name: device.name,
-            type: BluetoothType.classic,
-            isPaired: true,
-          ));
-        }
-      } catch (e) {
-        // Paired devices fetch failed, continue with discovery
-      }
-
       _classicScanSub = classic.FlutterBluetoothSerial.instance.startDiscovery()
         .listen(
           (result) {
+            String name = result.device.name ?? 'Unknown Device';
+            print("Classic Scanned MAC: ${result.device.address} | Name: $name");
             _addDevice(ObdDevice(
               id: result.device.address,
-              name: result.device.name,
+              name: name,
               type: BluetoothType.classic,
               isPaired: result.device.isBonded,
             ));
@@ -167,12 +154,22 @@ class BluetoothScannerManager {
       _bleScanSub = ble.FlutterBluePlus.scanResults.listen(
         (results) {
           for (var result in results) {
+            // Filter: skip very weak signals (likely ghost/background noise)
+            final rssi = result.rssi ?? -100;
+            if (rssi < -90) continue;
+
+                print("Scanned MAC: ${result.device.remoteId.str} | OS Name: ${result.device.platformName} | Adv Name: ${result.advertisementData.localName}");
+
+            String deviceName = result.advertisementData.localName.isNotEmpty
+                ? result.advertisementData.localName
+                : (result.device.platformName.isNotEmpty
+                    ? result.device.platformName
+                    : 'Unknown Device');
+
             if (!_devices.any((d) => d.id == result.device.remoteId.str && d.type == BluetoothType.ble)) {
               _addDevice(ObdDevice(
                 id: result.device.remoteId.str,
-                name: result.device.platformName.isNotEmpty
-                    ? result.device.platformName
-                    : 'OBD-II Device',
+                name: deviceName,
                 type: BluetoothType.ble,
                 rssi: result.rssi,
               ));

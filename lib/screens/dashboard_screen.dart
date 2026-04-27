@@ -6,8 +6,9 @@ class DashboardScreen extends StatelessWidget {
   final Map<String, String> liveData;
   final bool isConnected;
   final String? deviceName;
+  final VoidCallback? onConnectTap;
 
-  const DashboardScreen({super.key, required this.liveData, required this.isConnected, this.deviceName});
+  const DashboardScreen({super.key, required this.liveData, required this.isConnected, this.deviceName, this.onConnectTap});
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +25,7 @@ class DashboardScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Connection Status
-          _ModernConnectionStatus(isConnected: isConnected, deviceName: deviceName),
+          _ModernConnectionStatus(isConnected: isConnected, deviceName: deviceName, onTap: onConnectTap),
           const SizedBox(height: 24),
 
           // Main Gauges Row
@@ -161,63 +162,62 @@ class DashboardScreen extends StatelessWidget {
 class _ModernConnectionStatus extends StatelessWidget {
   final bool isConnected;
   final String? deviceName;
+  final VoidCallback? onTap;
 
-  const _ModernConnectionStatus({required this.isConnected, this.deviceName});
+  const _ModernConnectionStatus({
+    required this.isConnected,
+    this.deviceName,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = isDark ? Colors.white : const Color(0xFF2D2D30);
-    final secondaryColor = isDark ? Colors.white60 : Colors.grey[600]!;
-
-    return NeuContainer(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: isConnected ? Colors.green.withAlpha(51) : Colors.grey.withAlpha(51),
-              borderRadius: BorderRadius.circular(12),
+    return GestureDetector(
+      onTap: onTap,
+      child: NeuContainer(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isConnected ? Colors.green.withAlpha(51) : Colors.grey.withAlpha(51),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                isConnected ? Icons.bluetooth_connected_rounded : Icons.bluetooth_disabled_rounded,
+                color: isConnected ? Colors.green : Colors.grey,
+                size: 22,
+              ),
             ),
-            child: Icon(
-              isConnected ? Icons.bluetooth_connected_rounded : Icons.bluetooth_disabled_rounded,
-              color: isConnected ? Colors.green : Colors.grey,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isConnected ? (deviceName ?? 'OBD-II Connected') : 'Disconnected',
-                  style: TextStyle(
-                    color: isConnected ? Colors.green : Colors.grey,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isConnected ? (deviceName ?? 'OBD-II Connected') : 'Connect',
+                    style: TextStyle(
+                      color: isConnected ? Colors.green : Colors.grey,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  isConnected ? 'Reading live vehicle data' : 'Tap Bluetooth icon to connect',
-                  style: TextStyle(color: Colors.grey[500], fontSize: 13),
-                ),
-              ],
+                  const SizedBox(height: 2),
+                  Text(
+                    isConnected ? 'Reading live vehicle data' : 'Tap to open Bluetooth',
+                    style: TextStyle(color: Colors.grey[500], fontSize: 13),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Container(
-            width: 14, height: 14,
-            decoration: BoxDecoration(
-              color: isConnected ? Colors.green : Colors.grey,
-              shape: BoxShape.circle,
-              boxShadow: isConnected
-                  ? [BoxShadow(color: Colors.green.withAlpha(200), blurRadius: 8, spreadRadius: 2)]
-                  : null,
+            Icon(
+              Icons.chevron_right_rounded,
+              color: Colors.grey[400],
+              size: 20,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

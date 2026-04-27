@@ -4,18 +4,22 @@ import 'package:flutter/material.dart';
 /// Light neumorphism: soft gray background with white + gray shadows
 /// Dark neumorphism: dark gray background with lighter + darker shadows
 class NeuColors {
-  // Light theme - crisp neumorphic
+  // Light theme - subtle shadow
   static const lightBg = Color(0xFFE0E5EC);
-  static const lightShadowDark = Color(0xFFA3B1C6);         // #A3B1C6 100%
-  static const lightShadowLight = Color(0xFFFFFFFF);        // pure white
+  static const lightShadowDark = Color(0xFFA3B1C6);
+  static const lightShadowLight = Color(0xFFFFFFFF);
 
-  // Dark theme - premium crisp extrusion
-  static const darkBg = Color(0xFF2D2D30);
-  static const darkShadowDark = Color(0xFF14161A);           // deeper dark, defines height
-  static const darkShadowLight = Color(0xFF404550);          // subtle rim light, ~80%
+  // Dark theme - very subtle
+  static const darkBg = Color(0xFF1E1E22);
+  static const darkShadowOuter = Color(0xFF0A0A0D);
+  static const darkShadowInner = Color(0xFF3A3A42);
+
+  // Aliases for backward compatibility
+  static const darkShadowDark = darkShadowOuter;
+  static const darkShadowLight = darkShadowInner;
 }
 
-/// Raised neumorphic container (extruded look)
+/// Raised neumorphic container (extruded look) - subtle shadow
 class NeuContainer extends StatelessWidget {
   final Widget child;
   final double borderRadius;
@@ -45,34 +49,31 @@ class NeuContainer extends StatelessWidget {
         borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: isDark
             ? [
-                // Dark shadow: deep, defines the extrusion height
                 BoxShadow(
-                  color: NeuColors.darkShadowDark,
-                  offset: const Offset(6, 6),
-                  blurRadius: 12,
-                  spreadRadius: 1,
+                  color: NeuColors.darkShadowOuter,
+                  offset: const Offset(3, 3),
+                  blurRadius: 8,
+                  spreadRadius: -1,
                 ),
-                // Light shadow: defines the crisp rim/edge
                 BoxShadow(
-                  color: NeuColors.darkShadowLight,
-                  offset: const Offset(-5, -5),
-                  blurRadius: 10,
-                  spreadRadius: 1,
+                  color: NeuColors.darkShadowInner,
+                  offset: const Offset(-2, -2),
+                  blurRadius: 6,
+                  spreadRadius: -1,
                 ),
               ]
             : [
-                // Light neumorphic: crisp white + gray
                 BoxShadow(
                   color: NeuColors.lightShadowDark,
-                  offset: const Offset(6, 6),
-                  blurRadius: 12,
-                  spreadRadius: 1,
+                  offset: const Offset(3, 3),
+                  blurRadius: 8,
+                  spreadRadius: -1,
                 ),
                 BoxShadow(
                   color: NeuColors.lightShadowLight,
-                  offset: const Offset(-5, -5),
-                  blurRadius: 10,
-                  spreadRadius: 1,
+                  offset: const Offset(-2, -2),
+                  blurRadius: 6,
+                  spreadRadius: -1,
                 ),
               ],
       ),
@@ -81,7 +82,7 @@ class NeuContainer extends StatelessWidget {
   }
 }
 
-/// Pressed/inset neumorphic container (pressed button look)
+/// Pressed/inset neumorphic container (pressed button look) - subtle
 class NeuContainerPressed extends StatelessWidget {
   final Widget child;
   final double borderRadius;
@@ -103,34 +104,30 @@ class NeuContainerPressed extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? NeuColors.darkBg : NeuColors.lightBg,
         borderRadius: BorderRadius.circular(borderRadius),
-        boxShadow: isDark
-            ? [
-                // Inset dark: inner shadows reversed
+        boxShadow: isDark ? [
                 BoxShadow(
-                  color: NeuColors.darkShadowLight,
-                  offset: const Offset(-3, -3),
-                  blurRadius: 8,
+                  color: NeuColors.darkShadowInner,
+                  offset: const Offset(-2, -2),
+                  blurRadius: 6,
                   spreadRadius: -1,
                 ),
                 BoxShadow(
-                  color: NeuColors.darkShadowDark.withAlpha(128),
-                  offset: const Offset(3, 3),
-                  blurRadius: 8,
+                  color: NeuColors.darkShadowOuter.withAlpha(100),
+                  offset: const Offset(2, 2),
+                  blurRadius: 6,
                   spreadRadius: -1,
                 ),
-              ]
-            : [
-                // Inset light
+              ] : [
                 BoxShadow(
-                  color: NeuColors.lightShadowDark.withAlpha(77),
-                  offset: const Offset(3, 3),
-                  blurRadius: 8,
+                  color: NeuColors.lightShadowDark.withAlpha(51),
+                  offset: const Offset(2, 2),
+                  blurRadius: 6,
                   spreadRadius: -1,
                 ),
                 BoxShadow(
                   color: NeuColors.lightShadowLight,
-                  offset: const Offset(-3, -3),
-                  blurRadius: 8,
+                  offset: const Offset(-2, -2),
+                  blurRadius: 6,
                   spreadRadius: -1,
                 ),
               ],
@@ -140,7 +137,7 @@ class NeuContainerPressed extends StatelessWidget {
   }
 }
 
-/// Neumorphic icon button
+/// Neumorphic icon button - subtle shadow
 class NeuIconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onPressed;
@@ -169,12 +166,12 @@ class NeuIconButton extends StatelessWidget {
           shape: BoxShape.circle,
           boxShadow: isDark
               ? [
-                  BoxShadow(color: NeuColors.darkShadowDark, offset: const Offset(4, 4), blurRadius: 10, spreadRadius: -2),
-                  BoxShadow(color: NeuColors.darkShadowLight, offset: const Offset(-3, -3), blurRadius: 8, spreadRadius: -2),
+                  BoxShadow(color: NeuColors.darkShadowOuter, offset: const Offset(3, 3), blurRadius: 8, spreadRadius: -1),
+                  BoxShadow(color: NeuColors.darkShadowInner, offset: const Offset(-2, -2), blurRadius: 6, spreadRadius: -1),
                 ]
               : [
-                  BoxShadow(color: NeuColors.lightShadowDark, offset: const Offset(5, 5), blurRadius: 12, spreadRadius: -2),
-                  BoxShadow(color: NeuColors.lightShadowLight, offset: const Offset(-5, -5), blurRadius: 12, spreadRadius: -2),
+                  BoxShadow(color: NeuColors.lightShadowDark, offset: const Offset(3, 3), blurRadius: 8, spreadRadius: -1),
+                  BoxShadow(color: NeuColors.lightShadowLight, offset: const Offset(-2, -2), blurRadius: 6, spreadRadius: -1),
                 ],
         ),
         child: Icon(icon, color: iconColor ?? (isDark ? Colors.white70 : Colors.grey[700]), size: size * 0.45),

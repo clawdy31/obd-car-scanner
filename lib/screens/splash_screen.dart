@@ -43,16 +43,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             Container(
               width: 260,
               height: 260,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(52),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.white.withAlpha(26),
-                    blurRadius: 32,
-                    offset: const Offset(0, 12),
-                  ),
-                ],
-              ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(52),
                 child: Image.asset(
