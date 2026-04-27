@@ -143,7 +143,7 @@ class _MainScreenState extends State<MainScreen> {
           alignment: Alignment.centerLeft,
           child: Padding(
             padding: const EdgeInsets.only(left: 20),
-            child: Text('Doctor Car', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18, color: isDark ? Colors.white : const Color(0xFF510000))),
+            child: Text('Doctor Car', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 26, color: isDark ? Colors.white : const Color(0xFF510000))),
           ),
         ),
         actions: [
