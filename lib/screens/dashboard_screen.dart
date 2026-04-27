@@ -1,4 +1,7 @@
+import 'dart:math' as math;
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:sensors_plus/sensors_plus.dart';
 import '../widgets/common_widgets.dart';
 import '../widgets/neuomorphic.dart';
 
@@ -32,28 +35,24 @@ class DashboardScreen extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _ModernGaugeCard(
-                  label: 'Engine RPM',
-                  tooltipMsg: 'Revolutions Per Minute: How fast the engine\'s crankshaft is spinning.',
-                  value: liveData['rpm'] ?? '--',
-                  unit: 'RPM',
+                child: _CircularGauge(
+                  value: rpm,
                   maxValue: 8000,
-                  currentValue: rpm,
-                  gradient: const [Color(0x991D7CE1), Color(0xFF008F9C)],
-                  alertColor: rpm > 6000,
+                  label: 'Engine RPM',
+                  unit: 'RPM',
+                  displayValue: liveData['rpm'] ?? '--',
+                  accentColor: rpm > 6000 ? Colors.red : const Color(0xFFE11D48),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _ModernGaugeCard(
-                  label: 'Speed',
-                  tooltipMsg: 'Vehicle Speed: How fast your car is moving in kilometers per hour.',
-                  value: liveData['speed'] ?? '--',
-                  unit: 'km/h',
+                child: _CircularGauge(
+                  value: speed,
                   maxValue: 200,
-                  currentValue: speed,
-                  gradient: const [Color(0x991D7CE1), Color(0xFF008F9C)],
-                  alertColor: speed > 120,
+                  label: 'Speed',
+                  unit: 'km/h',
+                  displayValue: liveData['speed'] ?? '--',
+                  accentColor: speed > 120 ? Colors.red : const Color(0xFF008F9C),
                 ),
               ),
             ],
@@ -75,7 +74,7 @@ class DashboardScreen extends StatelessWidget {
           // Fuel Section
           _SectionHeader(title: 'Fuel System', icon: Icons.local_gas_station_rounded),
           const SizedBox(height: 12),
-          _ModernLinearGauge(label: 'Fuel Tank', tooltipMsg: 'Fuel Level: The current amount of fuel in your tank as a percentage.', value: liveData['fuel'] ?? '--', unit: '%', percentage: fuel / 100),
+          _WaterTankGauge(label: 'Fuel Tank', percentage: fuel / 100, value: liveData['fuel'] ?? '--', unit: '%'),
           const SizedBox(height: 24),
 
           // Sensors Section
@@ -246,6 +245,152 @@ class _SectionHeader extends StatelessWidget {
       ],
     );
   }
+}
+
+class _CircularGauge extends StatelessWidget {
+  final double value;
+  final double maxValue;
+  final String label;
+  final String unit;
+  final String displayValue;
+  final Color accentColor;
+
+  const _CircularGauge({
+    required this.value,
+    required this.maxValue,
+    required this.label,
+    required this.unit,
+    required this.displayValue,
+    this.accentColor = const Color(0xFFE11D48),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? NeuColors.darkBg : NeuColors.lightBg;
+    final textColor = isDark ? Colors.white : const Color(0xFF2D2D30);
+    final subColor = isDark ? Colors.white54 : Colors.grey[500]!;
+    final arcColor = isDark ? Colors.white24 : Colors.grey[300]!;
+    final pct = (value / maxValue).clamp(0.0, 1.0);
+
+    return NeuContainer(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Text(label, style: TextStyle(color: subColor, fontSize: 11, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: 130,
+            height: 130,
+            child: CustomPaint(
+              painter: _MinimalGaugePainter(
+                percentage: pct,
+                accentColor: accentColor,
+                bgColor: bgColor,
+                arcColor: arcColor,
+                isDark: isDark,
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      displayValue,
+                      style: TextStyle(fontSize: 26, fontWeight: FontWeight.w600, color: textColor),
+                    ),
+                    Text(unit, style: TextStyle(color: subColor, fontSize: 11, fontWeight: FontWeight.w400)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MinimalGaugePainter extends CustomPainter {
+  final double percentage;
+  final Color accentColor;
+  final Color bgColor;
+  final Color arcColor;
+  final bool isDark;
+
+  _MinimalGaugePainter({
+    required this.percentage,
+    required this.accentColor,
+    required this.bgColor,
+    required this.arcColor,
+    required this.isDark,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = math.min(size.width, size.height) / 2 - 6;
+    const startAngle = math.pi * 0.75;
+    const sweepAngle = math.pi * 1.5;
+
+    // Background track
+    final bgPaint = Paint()
+      ..color = arcColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      startAngle,
+      sweepAngle,
+      false,
+      bgPaint,
+    );
+
+    // Progress arc
+    final progressPaint = Paint()
+      ..color = accentColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      startAngle,
+      sweepAngle * percentage,
+      false,
+      progressPaint,
+    );
+
+    // Minimal tick dots at 0, 25, 50, 75, 100%
+    final tickPaint = Paint()..color = isDark ? Colors.white38 : Colors.grey[400]!;
+    final divisions = 4;
+    for (int i = 0; i <= divisions; i++) {
+      final angle = startAngle + (sweepAngle * i / divisions);
+      final dot = Offset(
+        center.dx + (radius) * math.cos(angle),
+        center.dy + (radius) * math.sin(angle),
+      );
+      canvas.drawCircle(dot, 2, tickPaint);
+    }
+
+    // Thin needle line
+    final needleAngle = startAngle + sweepAngle * percentage;
+    final needleEnd = Offset(
+      center.dx + (radius - 8) * math.cos(needleAngle),
+      center.dy + (radius - 8) * math.sin(needleAngle),
+    );
+    final needlePaint = Paint()
+      ..color = isDark ? Colors.white : const Color(0xFF2D2D30)
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(center, needleEnd, needlePaint);
+
+    // Center dot
+    canvas.drawCircle(center, 3, Paint()..color = accentColor);
+  }
+
+  @override
+  bool shouldRepaint(covariant _MinimalGaugePainter old) =>
+      old.percentage != percentage || old.isDark != isDark;
 }
 
 class _ModernGaugeCard extends StatelessWidget {
@@ -515,6 +660,193 @@ class _ModernLinearGauge extends StatelessWidget {
       ),
     );
   }
+}
+
+class _WaterTankGauge extends StatefulWidget {
+  final double percentage;
+  final String value;
+  final String unit;
+  final String label;
+
+  const _WaterTankGauge({
+    required this.percentage,
+    required this.value,
+    required this.unit,
+    required this.label,
+  });
+
+  @override
+  State<_WaterTankGauge> createState() => _WaterTankGaugeState();
+}
+
+class _WaterTankGaugeState extends State<_WaterTankGauge> {
+  double _tiltX = 0;
+  double _tiltY = 0;
+  StreamSubscription<AccelerometerEvent>? _accelSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _accelSub = accelerometerEventStream().listen((event) {
+      setState(() {
+        _tiltX = (event.x / 10).clamp(-1.0, 1.0);
+        _tiltY = (event.y / 10).clamp(-0.5, 0.5);
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _accelSub?.cancel();
+    super.dispose();
+  }
+
+  Color get _tankColor {
+    final p = widget.percentage.clamp(0.0, 1.0);
+    if (p < 0.2) return Colors.red;
+    if (p < 0.4) return Colors.orange;
+    return const Color(0xFF008F9C);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textOnWaterColor = isDark ? Colors.white : Colors.white;
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: isDark ? NeuColors.darkBg : NeuColors.lightBg,
+        boxShadow: [
+          BoxShadow(color: NeuColors.lightShadowDark.withAlpha(26), offset: const Offset(2, 2), blurRadius: 6, spreadRadius: -1),
+          BoxShadow(color: NeuColors.lightShadowLight, offset: const Offset(-1, -1), blurRadius: 4, spreadRadius: -1),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          // Water background
+          Positioned.fill(
+            child: CustomPaint(
+              painter: _WaterBgPainter(
+                percentage: widget.percentage.clamp(0.0, 1.0),
+                waterColor: _tankColor,
+                tiltX: _tiltX,
+                tiltY: _tiltY,
+                isDark: isDark,
+              ),
+            ),
+          ),
+          // Content on top
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withAlpha(51),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(Icons.local_gas_station_rounded, color: textOnWaterColor, size: 18),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(widget.label, style: TextStyle(fontWeight: FontWeight.w600, color: textOnWaterColor)),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Text(widget.value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: textOnWaterColor)),
+                        const SizedBox(width: 4),
+                        Text(widget.unit, style: TextStyle(color: Colors.white.withAlpha(179))),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withAlpha(51),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                  child: FractionallySizedBox(
+                    alignment: Alignment.centerLeft,
+                    widthFactor: widget.percentage.clamp(0.0, 1.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WaterBgPainter extends CustomPainter {
+  final double percentage;
+  final Color waterColor;
+  final double tiltX;
+  final double tiltY;
+  final bool isDark;
+
+  _WaterBgPainter({
+    required this.percentage,
+    required this.waterColor,
+    required this.tiltX,
+    required this.tiltY,
+    required this.isDark,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final fillHeight = size.height * (1 - percentage);
+    final waveAmplitude = 5.0 + (tiltX.abs() * 3);
+    final waveFreq = 2 * math.pi;
+
+    // Water body
+    final waterPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          waterColor.withAlpha(179),
+          waterColor,
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    final path = Path();
+    path.moveTo(0, fillHeight);
+
+    for (double x = 0; x <= size.width; x += 1) {
+      final wavePhase = (x / size.width) * waveFreq + (tiltX * math.pi);
+      final y = fillHeight + math.sin(wavePhase) * waveAmplitude + (tiltY * size.height * 0.05);
+      path.lineTo(x, y.clamp(0.0, fillHeight + waveAmplitude));
+    }
+
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
+    path.close();
+
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), Paint()..color = isDark ? const Color(0xFF1E1E22) : const Color(0xFFE0E5EC));
+    canvas.drawPath(path, waterPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _WaterBgPainter old) =>
+      old.tiltX != tiltX || old.tiltY != tiltY || old.percentage != percentage || old.waterColor != waterColor;
 }
 
 class _SensorCard extends StatelessWidget {
